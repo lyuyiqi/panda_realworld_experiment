@@ -521,6 +521,8 @@ class TrainConfig:
     overwrite: bool = False
     # If true, will resume training from the last checkpoint.
     resume: bool = False
+    # If set, will resume training from the specified step. Requires resume=True.
+    resume_step: int | None = None
 
     # If true, will enable wandb logging.
     wandb_enabled: bool = True
@@ -910,6 +912,29 @@ _CONFIGS = [
                 # Important: reuse the original DROID norm stats during fine-tuning!
                 assets_dir="gs://openpi-assets/checkpoints/pi05_droid/assets",
                 asset_id="droid",
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_droid/params"),
+        num_train_steps=20_000,
+        batch_size=32,
+    ),
+    TrainConfig(
+        # Fine-tuning pi05-DROID on move_corn_pot_real_50 dataset
+        name="pi05_move_corn_pot_finetune",
+        model=pi0_config.Pi0Config(
+            pi05=True,
+            action_dim=32,  # pi05 is trained with 32-dim actions
+            action_horizon=16,
+        ),
+        data=LeRobotDROIDDataConfig(
+            repo_id="move_corn_pot_real_50",
+            base_config=DataConfig(prompt_from_task=True),
+            assets=AssetsConfig(
+                # Use the newly computed norm stats for this dataset
+                # If you want to reuse DROID norm stats instead, set:
+                # assets_dir="gs://openpi-assets/checkpoints/pi05_droid/assets", asset_id="droid"
+                assets_dir=None,  # Use local assets_dirs instead
+                asset_id="move_corn_pot_real_50",  # Use the newly computed norm stats
             ),
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_droid/params"),
